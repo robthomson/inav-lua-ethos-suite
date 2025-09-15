@@ -1,0 +1,91 @@
+name: Create inavsuite-lua-ethos ZIP on Push
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'RF-*'
+
+jobs:
+  create-zip:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # ←—— add/remove locales here
+        lang: [en, de , es, fr, it, nl]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set build variables (commit-based version)
+        id: buildvars
+        shell: bash
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "GIT_VER=commit-${SHORT_SHA}" >> $GITHUB_ENV
+          echo "sha7=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      # Build merged JSON for the specific locale (writes to scripts/inavsuite/i18n/<locale>.json)
+      - name: Build i18n for this locale
+        run: python bin/i18n/build-single-json.py --only ${{ matrix.lang }}
+
+      # Stage a per-locale copy to avoid mutating the repo
+      - name: Stage files for this locale
+        shell: bash
+        run: |
+          STAGE="build/${{ matrix.lang }}/scripts"
+          mkdir -p "$STAGE"
+          rsync -a scripts/ "$STAGE"/
+          echo "STAGE=$STAGE" >> $GITHUB_ENV
+
+      # Update version in the staged copy
+      - name: Update version and config in main.lua (staged)
+        run: |
+          sed -E -i "s/(version[[:space:]]*=[[:space:]]*\{[^}]*suffix[[:space:]]*=[[:space:]]*\")[^\"]*(\")/\1${{ env.GIT_VER }}\2/" "${{ env.STAGE }}/inavsuite/main.lua"
+          grep 'config\.' "${{ env.STAGE }}/inavsuite/main.lua" || true
+
+      # Resolve @i18n(...)@ tags in the staged tree using the chosen locale
+      - name: Resolve i18n tags (locale=${{ matrix.lang }})
+        run: |
+          python .vscode/scripts/resolve_i18n_tags.py \
+            --json "${{ env.STAGE }}/inavsuite/i18n/${{ matrix.lang }}.json" \
+            --root "${{ env.STAGE }}"
+
+      # Copy sound pack for this locale into the staged tree
+      - name: Copy sound pack (locale=${{ matrix.lang }})
+        shell: bash
+        run: |
+          SRC="bin/sound-generator/soundpack/${{ matrix.lang }}"
+          if [ ! -d "$SRC" ]; then
+            echo "[AUDIO] $SRC not found; falling back to bin/sound-generator/soundpack/en"
+            SRC="bin/sound-generator/soundpack/en"
+          fi
+          DEST="${{ env.STAGE }}/inavsuite/audio/${{ matrix.lang }}"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          cp -a "$SRC/." "$DEST/"
+          echo "[AUDIO] Copied $SRC -> $DEST"
+
+      # Zip only the staged scripts folder for this locale
+      - name: Create inav-lua-ethos-suite-<lang>-commit-<sha7>.zip
+        shell: bash
+        run: |
+          ART="inav-lua-ethos-suite-${{ matrix.lang }}-${{ env.GIT_VER }}.zip"
+          (cd build/${{ matrix.lang }} && zip -q -r -9 "../$ART" scripts)
+          mv "build/${{ matrix.lang }}/../$ART" .
+          echo "ARTIFACT=$ART" >> $GITHUB_ENV
+
+      - name: Upload per-locale artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inav-lua-ethos-suite-${{ matrix.lang }}-${{ env.GIT_VER }}
+          path: ${{ env.ARTIFACT }}
+          if-no-files-found: error
+

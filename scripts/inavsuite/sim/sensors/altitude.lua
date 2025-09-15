@@ -1,0 +1,1 @@
+return math.random(31, 34)

@@ -1,0 +1,90 @@
+name: Create inavsuite-lua-ethos ZIP on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Per-language PR builds (mirrors push.yml behavior)
+  create-zip:
+    name: Build PR ZIP (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 👇 keep this in sync with push.yml (add/remove locales as needed)
+        lang: [en, de , es, fr, it, nl]
+
+    env:
+      STAGE: build/${{ matrix.lang }}/scripts
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set build variables (PR version)
+        run: |
+          PR_NUMBER='${{ github.event.pull_request.number }}'
+          echo "GIT_VER=PR-${PR_NUMBER}" >> $GITHUB_ENV
+
+      # Build merged i18n JSON only for this locale (into scripts/inavsuite/i18n/<lang>.json)
+      - name: Build merged i18n JSON (${{ matrix.lang }})
+        run: |
+          python bin/i18n/build-single-json.py --only '${{ matrix.lang }}'
+          test -f "scripts/inavsuite/i18n/${{ matrix.lang }}.json"
+
+      # Stage scripts/ into build/<lang>/scripts
+      - name: Stage scripts tree
+        run: |
+          rm -rf "${{ env.STAGE }}"
+          mkdir -p "${{ env.STAGE }}"
+          cp -a scripts/. "${{ env.STAGE }}/"
+
+      # Resolve @i18n(...)@ tags in the staged tree using the staged locale file
+      - name: Resolve i18n tags (locale=${{ matrix.lang }})
+        run: |
+          python .vscode/scripts/resolve_i18n_tags.py \
+            --json "${{ env.STAGE }}/inavsuite/i18n/${{ matrix.lang }}.json" \
+            --root "${{ env.STAGE }}"
+
+      # Copy sound pack for this locale into the staged tree (fallback to en)
+      - name: Copy sound pack (locale=${{ matrix.lang }})
+        run: |
+          SRC="bin/sound-generator/soundpack/${{ matrix.lang }}"
+          if [ ! -d "$SRC" ]; then
+            echo "[AUDIO] $SRC not found; falling back to bin/sound-generator/soundpack/en"
+            SRC="bin/sound-generator/soundpack/en"
+          fi
+          if [ -d "$SRC" ]; then
+            DEST="${{ env.STAGE }}/inavsuite/audio/${{ matrix.lang }}"
+            rm -rf "$DEST"
+            mkdir -p "$DEST"
+            cp -a "$SRC/." "$DEST/"
+            echo "[AUDIO] Copied $SRC -> $DEST"
+          else
+            echo "[AUDIO] No sound pack found (lang='${{ matrix.lang }}' or 'en'). Skipping."
+          fi
+
+      # Write PR version suffix into the *staged* main.lua
+      - name: Update version and config in staged main.lua
+        run: |
+          sed -E -i "s/(version[[:space:]]*=[[:space:]]*\{[^}]*suffix[[:space:]]*=[[:space:]]*\")[^\"]*(\")/\1${{ env.GIT_VER }}\2/" "${{ env.STAGE }}/inavsuite/main.lua"
+          grep 'config\.' "${{ env.STAGE }}/inavsuite/main.lua" || true
+
+      # Zip the staged scripts (includes i18n + audio for this locale)
+      - name: Create inav-lua-ethos-suite-${{ env.GIT_VER }}-${{ matrix.lang }}.zip
+        run: |
+          ( cd "build/${{ matrix.lang }}" && zip -q -r -9 "inav-lua-ethos-suite-${{ env.GIT_VER }}-${{ matrix.lang }}.zip" scripts )
+          mv "build/${{ matrix.lang }}/inav-lua-ethos-suite-${{ env.GIT_VER }}-${{ matrix.lang }}.zip" .
+
+      - name: Upload per-locale ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: inav-lua-ethos-suite-${{ env.GIT_VER }}-${{ matrix.lang }}
+          path: inav-lua-ethos-suite-${{ env.GIT_VER }}-${{ matrix.lang }}.zip
+          if-no-files-found: error

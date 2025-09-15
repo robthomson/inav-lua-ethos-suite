@@ -1,0 +1,124 @@
+--[[
+ * Copyright (C) Inav Project
+ *
+ * License GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * Note: Some icons have been sourced from https://www.flaticon.com/
+]]--
+
+local arg = { ... }
+local config = arg[1]
+
+local flightmode = {}
+local lastFlightMode = nil
+local hasBeenInFlight = false
+local lastArmed = false
+
+local throttleThreshold = 50 -- Throttle (%) required for flight mode transition
+
+--- Determines if the aircraft is considered "in flight" based on telemetry and session data.
+local function isGovernorActive(value)
+    return type(value) == "number" and value >= 4 and value <= 8
+end
+
+--- Determines if the flight mode is considered "in flight".
+-- This function checks two main conditions to decide if the model is in flight:
+-- If the model is armed, proceed to the below
+-- 1. If the governor sensor is active (highest priority).
+-- 2. If the throttle has been above zero for a sustained period.
+-- The function also ensures telemetry is active and the session is armed before proceeding.
+-- @return boolean True if the model is considered in flight, false otherwise.
+function flightmode.inFlight()
+    local telemetry = inavsuite.tasks.telemetry
+
+    if not telemetry.active() or not inavsuite.session.isArmed then
+        return false
+    end
+
+    -- Priority 1: Governor sensor range
+    local governor = telemetry.getSensor("governor")
+    if isGovernorActive(governor) then
+        return true
+    end
+
+    -- Priority 2: Throttle logic
+    local rx = inavsuite.session.rx
+    local throttle = rx and rx.values and rx.values.throttle
+
+    if throttle and throttle > throttleThreshold then
+        return true
+    end
+
+    return false
+end
+
+--- Resets the flight mode state.
+-- This function clears the last flight mode, resets the flight status,
+-- and clears the throttle start time. It is typically used to reinitialize
+-- the flight mode tracking variables to their default states.
+function flightmode.reset()
+    lastFlightMode = nil
+    hasBeenInFlight = false
+end
+
+--- Determines the current flight mode based on session state and flight status.
+-- This function checks the current session's flight mode and connection status,
+-- as well as the result of `flightmode.inFlight()`, to decide whether the mode
+-- should be "preflight", "inflight", or "postflight".
+-- It also manages the `hasBeenInFlight` flag to track if the system has ever been in flight.
+-- @return string The determined flight mode: "preflight", "inflight", or "postflight".
+local function determineMode()
+    local armed     = inavsuite.session.isArmed
+    local connected = inavsuite.session.isConnected
+    local current   = inavsuite.flightmode.current
+
+    -- If we *were* inflight and now lost the link, go to postflight.
+    if current == "inflight" and not connected then
+        hasBeenInFlight = false
+        lastArmed = armed
+        return "postflight"
+    end
+
+    -- Arming rising edge starts a fresh cycle: ensure we don't fall back to postflight.
+    if armed and not lastArmed then
+        hasBeenInFlight = false
+        lastArmed = armed
+        return "preflight"
+    end
+
+    -- In-flight has highest priority.
+    if flightmode.inFlight() then
+        hasBeenInFlight = true
+        lastArmed = armed
+        return "inflight"
+    end
+
+    -- No special transition; derive from whether we've flown since last arming.
+    lastArmed = armed
+    return hasBeenInFlight and "postflight" or "preflight"
+end
+
+
+--- Wakes up the flight mode task and updates the current flight mode if it has changed.
+-- Determines the current flight mode using `determineMode()`. If the mode has changed since the last check,
+-- logs the new flight mode, updates the session's flight mode, and stores the new mode as the last known mode.
+function flightmode.wakeup()
+    local mode = determineMode()
+
+    if lastFlightMode ~= mode then
+        inavsuite.utils.log("Flight mode: " .. mode, "info")
+        inavsuite.flightmode.current = mode
+        lastFlightMode = mode
+    end    
+end
+
+return flightmode

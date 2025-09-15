@@ -1,0 +1,145 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Deploy & Launch",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--launch"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false, // prevents auto-attach to child procs
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy & Launch [Fast]",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--fileext", "fast",
+        "--launch"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy & Choose",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--choose",
+        "--launch"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy & Choose [Fast]",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--fileext", "fast",
+        "--choose",
+        "--launch"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy Radio",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--radio"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy Radio [Fast]",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--fileext", "fast",
+        "--radio"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy Radio + Serial Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--radio",
+        "--radio-debug"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Deploy Radio + Serial Debug [Fast]",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--fileext", "fast",
+        "--radio",
+        "--radio-debug"
+      ],
+      "console": "integratedTerminal",
+      "subProcess": false,
+      "justMyCode": true,
+      "stopOnEntry": false,
+      "preLaunchTask": "kill deploy"
+    },
+    {
+      "name": "Radio: Serial Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/.vscode/scripts/deploy.py",
+      "args": [
+        "--config-env", "INAVSUITE_CONFIG",
+        "--radio",
+        "--connect-only"
+      ],
+      "console": "integratedTerminal"
+    }
+  ]
+}

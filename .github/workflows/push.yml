@@ -1,0 +1,63 @@
+name: Create inavsuite-lua-ethos ZIP on Push
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'RF-*'
+
+jobs:
+  create-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set build variables (commit-based version)
+      run: |
+        SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+        echo "GIT_VER=commit-${SHORT_SHA}" >> $GITHUB_ENV
+
+    - name: Update version and config in main.lua
+      run: |
+        # Use GIT_VER set in previous step
+        sed -E -i "s/(version[[:space:]]*=[[:space:]]*\{[^}]*suffix[[:space:]]*=[[:space:]]*\")[^\"]*(\")/\1${{ env.GIT_VER }}\2/" scripts/inavsuite/main.lua
+
+
+        # Show updated file (for verification)
+        grep 'config\.' scripts/inavsuite/main.lua
+
+    - name: Create inav-lua-ethos-suite-commit-<short_sha>.zip (entire scripts folder)
+      run: |
+        zip -q -r -9 "inav-lua-ethos-suite-${{ env.GIT_VER }}.zip" scripts
+
+    - name: Upload inav-lua-ethos-suite-commit-<short_sha>.zip as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: inav-lua-ethos-suite-${{ env.GIT_VER }}
+        path: inav-lua-ethos-suite-${{ env.GIT_VER }}.zip
+        if-no-files-found: error
+        
+    - name: Package combined soundpack
+      run: |
+        # Where your per-locale packs live
+        SOUND_DIR="bin/sound-generator/soundpack"
+
+        # Where to drop the ZIP
+        OUTPUT_DIR="${GITHUB_WORKSPACE}/tmp"
+        mkdir -p "$OUTPUT_DIR"
+
+        # Name it with your GIT_VER (e.g. PR-936 or 1.2.3)
+        ZIP_NAME="inav-lua-ethos-suite-soundpack-${{ env.GIT_VER }}.zip"
+
+        # Zip up everything under SOUND_DIR, preserving locale/pack/... structure
+        (cd "$SOUND_DIR" && zip -r "$OUTPUT_DIR/$ZIP_NAME" .)
+
+        echo "✅ Created $OUTPUT_DIR/$ZIP_NAME"
+
+    - name: Upload soundpack artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: inav-lua-ethos-suite-soundpack-${{ env.GIT_VER }}
+        path: tmp/*.zip

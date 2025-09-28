@@ -572,7 +572,11 @@ local sensorTable = {
                   value = function() return simSensors('altitude') end,
                   min = 0, max = 50000 },
             },
-            sport = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0100 } },
+            sport = { 
+                { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0820 } ,                
+                { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0100 } 
+            
+            },
             crsf  = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x10B2 }, },
             crsfLegacy = { nil },
         },
@@ -686,7 +690,10 @@ local sensorTable = {
                   value = function() return simSensors('attyaw') end,
                   min = -1800, max = 3600 },
             },
-            sport = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x5210 }, },
+            sport = { 
+                { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x5210 }, 
+                { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0830 }, 
+            },
             crsf  = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x1103 }, },
             crsfLegacy = { nil },
         },
@@ -702,10 +709,16 @@ local sensorTable = {
                   value = function() return simSensors('attroll') end,
                   min = -1800, max = 3600 },
             },
-            sport = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0730 , subId = 0}, },
+            sport = { 
+                { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0440 , subId = 0}, 
+            },
             crsf  = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x1102 }, },
             crsfLegacy = { nil },
         },
+        transform = function(value)
+            if value == nil then return nil end
+            return value
+        end,        
     },
 
     attpitch = {
@@ -718,10 +731,18 @@ local sensorTable = {
                   value = function() return simSensors('attpitch') end,
                   min = -1800, max = 3600 },
             },
-            sport = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0730, subId = 1 }, },
+            sport = { 
+                { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x0430, subId = 0 }, 
+            },
             crsf  = { { category = CATEGORY_TELEMETRY_SENSOR, appId = 0x1101 }, },
             crsfLegacy = { nil },
         },
+        transform = function(value)
+            if value == nil then return nil end
+            -- may need some logic here to invert based on fc orientation
+            value = -value
+            return value
+        end,
     },
 
     groundspeed = {

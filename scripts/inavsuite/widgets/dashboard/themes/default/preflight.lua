@@ -216,8 +216,8 @@ return {
         rowspan = 2,
         type    = "text",
         subtype = "telemetry",
-        source  = "pid_profile",
-        title   = "@i18n(widgets.dashboard.profile):upper()@",
+        source  = "attroll",
+        title   = "ATT ROLL",
         titlepos= "bottom",
         transform = "floor",
         titlecolor = colorMode.titlecolor,
@@ -231,8 +231,8 @@ return {
         rowspan = 2,
         type    = "text",
         subtype = "telemetry",
-        source  = "rate_profile",
-        title   = "@i18n(widgets.dashboard.rates):upper()@",
+        source  = "attpitch",
+        title   = "ATT PITCH",
         titlepos= "bottom",
         transform = "floor",
         titlecolor = colorMode.titlecolor,
@@ -286,7 +286,7 @@ return {
   header_boxes = header_boxes,
   header_layout = header_layout,
   scheduler = {
-        spread_scheduling = true,         -- (optional: spread scheduling over the interval to avoid spikes in CPU usage) 
+        spread_scheduling = false,         -- (optional: spread scheduling over the interval to avoid spikes in CPU usage) 
         spread_scheduling_paint = false,  -- optional: spread scheduling for paint (if true, paint will be spread over the interval) 
         spread_ratio = 0.5                -- optional: manually override default ratio logic (applies if spread_scheduling is true)
   }    

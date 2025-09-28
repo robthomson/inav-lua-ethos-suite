@@ -146,7 +146,7 @@ dashboard._loader_min_duration = 1.5
 dashboard._loader_start_time = nil
 
 -- ===== Repaint governor ==== ------
-dashboard._minPaintInterval   = 0.1   -- 50ms ≈ 20 FPS; tune between 0.033–0.1
+dashboard._minPaintInterval   = 0.033   -- 50ms ≈ 20 FPS; tune between 0.033–0.1
 dashboard._lastInvalidateTime = 0
 dashboard._pendingInvalidates = {}     -- queued rects to invalidate
 

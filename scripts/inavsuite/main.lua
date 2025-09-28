@@ -32,7 +32,7 @@ local config = {
   icon_unsupported = lcd.loadMask("app/gfx/unsupported.png"),
   version = { major = 2, minor = 3, revision = 0, suffix = "20250731" },
   ethosVersion = { 1, 6, 2 }, -- min supported Ethos version
-  supportedMspApiVersion = { "12.07", "12.08", "12.09" },
+  supportedMspApiVersion = { "2.05" },
   baseDir = "inavsuite",
   preferences = "inavsuite.user", -- user preferences folder location
   defaultRateProfile = 4, -- ACTUAL

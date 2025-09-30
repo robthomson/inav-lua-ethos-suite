@@ -1920,8 +1920,6 @@ function ui.requestPage()
       return
     end
 
-     local retryCount = app.Page.apidata.retryCount[apiKey] or 0   
-
     local v      = apiList[state.currentIndex]
     local apiKey = type(v) == "string" and v or v.name
     if not apiKey then
@@ -1938,6 +1936,7 @@ function ui.requestPage()
 
     if app and app.Page and app.Page.apidata then app.Page.apidata.retryCount = app.Page.apidata.retryCount or {} end
 
+    local retryCount = app.Page.apidata.retryCount[apiKey] or 0
     local handled = false
 
     log("[PROCESS] API: " .. apiKey .. " (Attempt " .. (retryCount + 1) .. ")", "debug")

@@ -36,6 +36,25 @@ local defaultData = {}
 -- Create a new instance
 local handlers = inavsuite.tasks.msp.api.createHandlers()
 
+
+local function processReplyStaticWrite(self, buf)
+  -- mark write done without capturing handlers/page
+  mspWriteComplete = true
+  local getComplete = self and self.getCompleteHandler
+  if getComplete then
+    local complete = getComplete()
+    if complete then complete(self, buf) end
+  end
+end
+
+local function errorHandlerStatic(self, buf)
+  local getError = self and self.getErrorHandler
+  if getError then
+    local err = getError()
+    if err then err(self, buf) end
+  end
+end
+
 -- Variables to store optional the UUID and timeout for payload
 local MSP_API_UUID
 local MSP_API_MSG_TIMEOUT

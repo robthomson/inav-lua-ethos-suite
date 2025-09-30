@@ -1,5 +1,5 @@
 --[[
- * Copyright (C) Inav Project
+ * Copyright (C) Rotorflight Project
  *
  * License GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
  *
@@ -14,6 +14,8 @@
  *
  * Note. Some icons have been sourced from https://www.flaticon.com/
 ]] --
+local core = assert(inavsuite.compiler.loadfile("tasks/msp/api_core.lua"))()
+
 -- Constants for MSP Commands
 local API_NAME = "RTC" -- API name (must be same as filename)
 local MSP_API_CMD_WRITE = 246 -- Command identifier for setting RTC
@@ -34,7 +36,7 @@ local payloadData = {}
 local defaultData = {}
 
 -- Create a new instance
-local handlers = inavsuite.tasks.msp.api.createHandlers()
+local handlers = core.createHandlers()
 
 
 local function processReplyStaticWrite(self, buf)

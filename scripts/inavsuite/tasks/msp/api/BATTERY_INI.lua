@@ -1,5 +1,5 @@
 --[[
- * Copyright (C) Inav Project
+ * Copyright (C) Rotorflight Project
  *
  * License GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
  *
@@ -14,6 +14,7 @@
  *
  * Note. Some icons have been sourced from https://www.flaticon.com/
 ]] --
+local core = assert(inavsuite.compiler.loadfile("tasks/msp/api_core.lua"))()
 
 local API_NAME = "BATTERY_INI"
 local INI_FILE = "SCRIPTS:/" .. inavsuite.config.preferences .. "/models/" .. inavsuite.session.mcu_id .. ".ini"

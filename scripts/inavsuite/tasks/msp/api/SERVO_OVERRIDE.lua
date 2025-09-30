@@ -1,5 +1,5 @@
 --[[
- * Copyright (C) Inav Project
+ * Copyright (C) Rotorflight Project
  *
  * License GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
  *
@@ -14,6 +14,8 @@
  *
  * Note. Some icons have been sourced from https://www.flaticon.com/
 ]] --
+local core = assert(inavsuite.compiler.loadfile("tasks/msp/api_core.lua"))()
+
 -- Constants for MSP Commands
 local API_NAME = "SERVO_OVERRIDE" -- API name (must be same as filename)
 local MSP_API_CMD_READ = 192 -- Command identifier for MSP Mixer Config Read
@@ -38,13 +40,13 @@ local MSP_API_STRUCTURE_WRITE = {
             }
 
 -- filter the structure to remove any params not supported by the running api version
-local MSP_API_STRUCTURE_READ = inavsuite.tasks.msp.api.filterByApiVersion(MSP_API_STRUCTURE_READ_DATA)
+local MSP_API_STRUCTURE_READ = core.filterByApiVersion(MSP_API_STRUCTURE_READ_DATA)
 
 -- calculate the min bytes value from the structure
-local MSP_MIN_BYTES = inavsuite.tasks.msp.api.calculateMinBytes(MSP_API_STRUCTURE_READ)
+local MSP_MIN_BYTES = core.calculateMinBytes(MSP_API_STRUCTURE_READ)
 
 -- generate a simulatorResponse from the read structure
-local MSP_API_SIMULATOR_RESPONSE = inavsuite.tasks.msp.api.buildSimResponse(MSP_API_STRUCTURE_READ)
+local MSP_API_SIMULATOR_RESPONSE = core.buildSimResponse(MSP_API_STRUCTURE_READ)
 
 -- Variable to store parsed MSP data
 local mspData = nil
@@ -53,7 +55,7 @@ local payloadData = {}
 local defaultData = {}
 
 -- Create a new instance
-local handlers = inavsuite.tasks.msp.api.createHandlers()
+local handlers = core.createHandlers()
 
 -- Variables to store optional the UUID and timeout for payload
 local MSP_API_UUID
@@ -66,7 +68,7 @@ local writeDoneRegistry = setmetatable({}, { __mode = "kv" })
 
 
 local function processReplyStaticRead(self, buf)
-  inavsuite.tasks.msp.api.parseMSPData(buf, self.structure, nil, nil, function(result)
+  core.parseMSPData(buf, self.structure, nil, nil, function(result)
     mspData = result
     if #buf >= (self.minBytes or 0) then
       local getComplete = self.getCompleteHandler
@@ -130,7 +132,7 @@ local function write(suppliedPayload)
 
   -- Build payload eagerly (no capture)
   local payload = suppliedPayload or
-    inavsuite.tasks.msp.api.buildWritePayload(API_NAME, payloadData, MSP_API_STRUCTURE_WRITE, MSP_REBUILD_ON_WRITE)
+    core.buildWritePayload(API_NAME, payloadData, MSP_API_STRUCTURE_WRITE, MSP_REBUILD_ON_WRITE)
 
   -- Choose a UUID for this write; if you already set MSP_API_UUID elsewhere, we’ll reuse it
   local uuid = MSP_API_UUID or inavsuite.utils and inavsuite.utils.uuid and inavsuite.utils.uuid() or tostring(os.clock())
